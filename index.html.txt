@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tổng vụ - Quản trị Nhân sự Di động</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icon CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            background-color: #f8fafc;
+            position: relative;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="h-full font-sans antialiased text-slate-800 bg-slate-900 flex justify-center items-center">
+
+    <div class="app-container w-full">
+        <!-- Header App -->
+        <header class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-4 py-3 shadow-md flex justify-between items-center z-10 shrink-0">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center font-bold text-lg text-white">
+                    <span class="text-amber-300">TV</span>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base leading-tight tracking-wide">TỔNG VỤ HR</h1>
+                    <p class="text-[10px] text-blue-200 flex items-center space-x-1">
+                        <span id="sheetSyncStatus" class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        <span id="sheetStatusText">Lưu trữ dữ liệu</span>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button onclick="openGoogleSheetSettings()" class="bg-white/10 text-white text-xs px-2.5 py-1.5 rounded-lg border border-white/20 hover:bg-white/20 transition flex items-center space-x-1" title="Cấu hình Google Sheet">
+                    <i class="fa-brands fa-google-drive text-amber-300"></i>
+                    <span class="text-[11px]">Sheet</span>
+                </button>
+                <select id="currentEmployeeSelect" onchange="switchEmployee(this.value)" class="bg-white/10 text-white text-xs font-semibold px-2 py-1.5 rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                    <option value="NV001" class="text-slate-800">NV001 - Nguyễn Văn An (Chủ quản)</option>
+                    <option value="NV002" class="text-slate-800">NV002 - Trần Thị Bình (Nhân viên)</option>
+                    <option value="NV003" class="text-slate-800">NV003 - Lê Hoàng Cường (Nhân viên)</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Body (Scrollable) -->
+        <main id="mainContent" class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-20">
+            <!-- Content will be dynamically populated here -->
+        </main>
+
+        <!-- Toast Notification Container -->
+        <div id="toast" class="fixed top-16 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-full text-xs shadow-lg transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center space-x-2 border border-slate-700">
+            <i id="toastIcon" class="fa-solid fa-circle-check text-green-400"></i>
+            <span id="toastMessage">Thông báo</span>
+        </div>
+
+        <!-- Google Sheet Configuration Modal -->
+        <div id="googleSheetModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-slate-100 space-y-4 animate-in fade-in zoom-in duration-200">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex items-center space-x-2 text-blue-600">
+                        <i class="fa-brands fa-google-drive text-xl text-emerald-600"></i>
+                        <h3 class="font-bold text-sm text-slate-800">Cấu hình Google Sheets API</h3>
+                    </div>
+                    <button onclick="closeGoogleSheetSettings()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-base"></i></button>
+                </div>
+
+                <div class="space-y-3 text-xs text-slate-600">
+                    <p class="text-[11px] text-slate-500">Kết nối ứng dụng với Google Sheets thông qua Web App URL (Google Apps Script) để đồng bộ dữ liệu nhân sự, chấm công và cấp phát thiết bị 2 chiều.</p>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Google Apps Script Web App URL</label>
+                        <input type="text" id="sheetApiUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button onclick="testSheetConnection()" class="py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl border border-slate-200 hover:bg-slate-200 transition text-xs flex items-center justify-center space-x-1">
+                        <i class="fa-solid fa-rotate"></i><span>Kiểm tra</span>
+                    </button>
+                    <button onclick="saveGoogleSheetSettings()" class="py-2.5 bg-blue-600 text-white font-bold rounded-xl shadow-md hover:bg-blue-700 transition text-xs flex items-center justify-center space-x-1">
+                        <i class="fa-solid fa-check"></i><span>Lưu kết nối</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Giả Lập Email / Thông Báo Phê Duyệt Cho Chủ Quản -->
+        <div id="approvalModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-slate-100 space-y-4 animate-in fade-in zoom-in duration-200">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex items-center space-x-2 text-blue-600">
+                        <i class="fa-solid fa-envelope-circle-check text-xl"></i>
+                        <h3 class="font-bold text-sm text-slate-800">Thông báo Gửi Email Chủ Quản</h3>
+                    </div>
+                    <button onclick="closeApprovalModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-base"></i></button>
+                </div>
+
+                <div class="space-y-2 text-xs text-slate-600 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/60">
+                    <p><strong class="text-slate-700">Người gửi:</strong> <span id="modalSender">Nguyễn Văn An</span></p>
+                    <p><strong class="text-slate-700">Gửi đến Mail:</strong> <span id="modalManager" class="text-blue-600 font-medium">chuquan@company.com</span></p>
+                    <p><strong class="text-slate-700">Loại tác vụ:</strong> <span id="modalType" class="font-semibold text-slate-800">Nghỉ phép năm</span></p>
+                    <hr class="border-slate-200 my-1">
+                    <p id="modalDetail1" class="font-medium text-slate-800"></p>
+                    <p id="modalDetail2" class="text-slate-500"></p>
+                </div>
+
+                <div class="p-2.5 bg-amber-50 rounded-xl text-[11px] text-amber-800 border border-amber-200 flex items-start space-x-2">
+                    <i class="fa-solid fa-circle-info text-amber-500 mt-0.5"></i>
+                    <span>Chủ quản sẽ nhận được email này và có thể phê duyệt trực tiếp hoặc từ chối trên hệ thống.</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <button onclick="processApproval(false)" class="py-2.5 bg-rose-50 text-rose-600 font-bold rounded-xl border border-rose-200 hover:bg-rose-100 transition text-xs flex items-center justify-center space-x-1">
+                        <i class="fa-solid fa-xmark"></i><span>Không duyệt</span>
+                    </button>
+                    <button onclick="processApproval(true)" class="py-2.5 bg-emerald-600 text-white font-bold rounded-xl shadow-md hover:bg-emerald-700 transition text-xs flex items-center justify-center space-x-1">
+                        <i class="fa-solid fa-check"></i><span>Phê duyệt</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation Bar -->
